@@ -51,26 +51,15 @@ public class ControllerUtils {
                 return (Class<? extends CustomResourceDoneable<T>>) doneableClassCache.get(customResourceClass);
             }
 
-            ClassPool pool = ClassPool.getDefault();
-            pool.appendClassPath(new LoaderClassPath(Thread.currentThread().getContextClassLoader()));
-
-            CtClass superClass = pool.get(CustomResourceDoneable.class.getName());
-            CtClass function = pool.get(Function.class.getName());
-            CtClass customResource = pool.get(customResourceClass.getName());
-            CtClass[] argTypes = {customResource, function};
-            CtClass customDoneable = pool.makeClass(className, superClass);
-            CtConstructor ctConstructor = CtNewConstructor.make(argTypes, null, "super($1, $2);", customDoneable);
-            customDoneable.addConstructor(ctConstructor);
-
-            Class<? extends CustomResourceDoneable<T>> doneableClass;
-            if (JAVA_VERSION >= 9) {
-                doneableClass = (Class<? extends CustomResourceDoneable<T>>) customDoneable.toClass(customResourceClass);
-            } else {
-                doneableClass = (Class<? extends CustomResourceDoneable<T>>) customDoneable.toClass();
+            if (!getAnnotation(controller).customResourceDoneableClass().equals(Controller.EMPTY_DONEABLE.class)) {
+                Class<? extends CustomResourceDoneable<T>> doneableClass = (Class<? extends CustomResourceDoneable<T>>) getAnnotation(controller).customResourceDoneableClass();
+                doneableClassCache.put(customResourceClass, doneableClass);
+                return doneableClass;
             }
-            doneableClassCache.put(customResourceClass, doneableClass);
-            return doneableClass;
-        } catch (CannotCompileException | NotFoundException e) {
+
+            throw new RuntimeException("Cannot initialize Donealbe class");
+
+        } catch (RuntimeException e) {
             throw new IllegalStateException(e);
         }
     }
