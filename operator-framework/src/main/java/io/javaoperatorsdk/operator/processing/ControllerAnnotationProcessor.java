@@ -28,9 +28,34 @@ public class ControllerAnnotationProcessor extends AbstractProcessor {
                     .map(e -> (Symbol.ClassSymbol) e)
                     .forEach(controllerClassSymbol -> {
                         generateDoneableClass(controllerClassSymbol);
+                        generateListClass(controllerClassSymbol);
                     });
         }
         return false;
+    }
+
+    private void generateListClass(Symbol.ClassSymbol controllerClassSymbol) {
+        JavaFileObject builderFile = null;
+        try {
+            // TODO: the resourceType retrieval logic is currently very fragile, done for testing purposes and need to be improved to cover all possible conditions
+            final TypeMirror resourceType = ((DeclaredType) controllerClassSymbol.getInterfaces().head).getTypeArguments().get(0);
+            Symbol.ClassSymbol customerResourceSymbol = (Symbol.ClassSymbol) processingEnv.getElementUtils().getTypeElement(resourceType.toString());
+            builderFile = processingEnv.getFiler()
+                    .createSourceFile(customerResourceSymbol.className() + "List");
+            try (PrintWriter out = new PrintWriter(builderFile.openWriter())) {
+                out.println("package " + customerResourceSymbol.packge().fullname + ";");
+                out.println("import io.quarkus.runtime.annotations.RegisterForReflection;");
+                out.println("import io.fabric8.kubernetes.client.CustomResourceList;");
+                out.println();
+                out.println("@RegisterForReflection");
+                out.println("public class " + customerResourceSymbol.name + "List " + " extends CustomResourceList<" + customerResourceSymbol.name + "> {");
+                out.println("}");
+            }
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     private void generateDoneableClass(Symbol.ClassSymbol controllerClassSymbol) {
