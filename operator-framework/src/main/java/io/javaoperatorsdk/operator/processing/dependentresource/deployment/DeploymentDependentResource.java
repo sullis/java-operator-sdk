@@ -2,11 +2,15 @@ package io.javaoperatorsdk.operator.processing.dependentresource.deployment;
 
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.DoneableDeployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import io.fabric8.kubernetes.client.utils.Serialization;
+import io.javaoperatorsdk.operator.api.DeleteControl;
 import io.javaoperatorsdk.operator.processing.dependentresource.DependentResource;
+import io.javaoperatorsdk.operator.processing.dependentresource.SimpleDeleteDescriptor;
 import io.javaoperatorsdk.operator.processing.dependentresource.Status;
 import io.javaoperatorsdk.operator.processing.event.AbstractEventSource;
 import org.slf4j.Logger;
@@ -24,7 +28,7 @@ import static io.javaoperatorsdk.operator.processing.KubernetesResourceUtils.get
 import static java.net.HttpURLConnection.HTTP_GONE;
 
 public class DeploymentDependentResource extends AbstractEventSource
-        implements DependentResource<DeploymentInput, DeploymentStatus>, Watcher<Deployment> {
+        implements DependentResource<DeploymentInput, DeleteInput, DeploymentStatus>, Watcher<Deployment> {
 
     private final static Logger log = LoggerFactory.getLogger(DeploymentDependentResource.class);
 
@@ -42,7 +46,7 @@ public class DeploymentDependentResource extends AbstractEventSource
 
 
     @Override
-    public DeploymentStatus reconcile(DeploymentInput input) {
+    public DeploymentStatus createOrUpdate(DeploymentInput input) {
 
         Optional<Deployment> cachedDeployment = getLatestDeployment(input.getCustomResourceUid());
         Deployment deployment;
@@ -54,6 +58,18 @@ public class DeploymentDependentResource extends AbstractEventSource
 
         return new DeploymentStatus(isDeploymentAccordingToInput(input, deployment) ?
                 Status.CREATED_SUCCESSFULLY : Status.IN_PROGRESS, deployment);
+    }
+
+    @Override
+    public DeleteControl delete(DeleteInput input) {
+        log.info("Deleting Deployment {}", input.getName());
+        RollableScalableResource<Deployment, DoneableDeployment> deployment = client.apps().deployments()
+                .inNamespace(input.getNamespace())
+                .withName(input.getName());
+        if (deployment.get() != null) {
+            deployment.delete();
+        }
+        return DeleteControl.DEFAULT_DELETE;
     }
 
     private Deployment createOrUpdateDeployment(DeploymentInput input) {
@@ -73,7 +89,7 @@ public class DeploymentDependentResource extends AbstractEventSource
 
             //make sure label selector matches label (which has to be matched by service selector too)
             deployment.getSpec().getTemplate().getMetadata().getLabels().put("app", input.getName());
-            deployment.getSpec().getSelector().getMatchLabels().put("app",input.getName());
+            deployment.getSpec().getSelector().getMatchLabels().put("app", input.getName());
 
             OwnerReference ownerReference = deployment.getMetadata().getOwnerReferences().get(0);
             ownerReference.setName(input.getName());
