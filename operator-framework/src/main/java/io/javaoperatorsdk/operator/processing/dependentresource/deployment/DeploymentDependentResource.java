@@ -10,7 +10,6 @@ import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import io.fabric8.kubernetes.client.utils.Serialization;
 import io.javaoperatorsdk.operator.api.DeleteControl;
 import io.javaoperatorsdk.operator.processing.dependentresource.DependentResource;
-import io.javaoperatorsdk.operator.processing.dependentresource.SimpleDeleteDescriptor;
 import io.javaoperatorsdk.operator.processing.dependentresource.Status;
 import io.javaoperatorsdk.operator.processing.event.AbstractEventSource;
 import org.slf4j.Logger;
