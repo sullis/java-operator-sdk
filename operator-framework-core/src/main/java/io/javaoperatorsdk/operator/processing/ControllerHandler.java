@@ -6,6 +6,8 @@ import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.javaoperatorsdk.operator.api.ResourceController;
 import io.javaoperatorsdk.operator.api.config.ControllerConfiguration;
+import io.javaoperatorsdk.operator.processing.event.Event;
+import io.javaoperatorsdk.operator.processing.event.EventHandler;
 import io.javaoperatorsdk.operator.processing.event.EventSource;
 import io.javaoperatorsdk.operator.processing.event.EventSourceManager;
 import io.javaoperatorsdk.operator.processing.event.internal.CustomResourceEventSource;
@@ -20,7 +22,7 @@ import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ControllerHandler implements EventSourceManager {
+public class ControllerHandler implements EventSourceManager, EventHandler {
 
   public static final String RETRY_TIMER_EVENT_SOURCE_NAME = "retry-timer-event-source";
   private static final String CUSTOM_RESOURCE_EVENT_SOURCE_NAME = "custom-resource-event-source";
@@ -51,6 +53,11 @@ public class ControllerHandler implements EventSourceManager {
   }
 
   @Override
+  public void handleEvent(Event event) {
+    this.eventHandler.handleEvent(event);
+  }
+
+  @Override
   public void close() {
     try {
       lock.lock();
@@ -67,6 +74,7 @@ public class ControllerHandler implements EventSourceManager {
     } finally {
       lock.unlock();
     }
+    eventHandler.close();
   }
 
   @Override
@@ -80,7 +88,7 @@ public class ControllerHandler implements EventSourceManager {
             "Event source with name already registered. Event source name: " + name);
       }
       eventSources.put(name, eventSource);
-      eventSource.setEventHandler(defaultEventHandler);
+      eventSource.setEventHandler(this);
       eventSource.start();
     } finally {
       lock.unlock();
