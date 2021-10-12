@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.fabric8.kubernetes.client.CustomResource;
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Version;
 import io.javaoperatorsdk.operator.api.ResourceController;
@@ -18,31 +19,21 @@ import io.javaoperatorsdk.operator.api.config.ConfigurationService;
 import io.javaoperatorsdk.operator.api.config.ControllerConfiguration;
 import io.javaoperatorsdk.operator.api.config.ExecutorServiceManager;
 import io.javaoperatorsdk.operator.processing.ConfiguredController;
-import io.javaoperatorsdk.operator.processing.DefaultEventHandler;
-import io.javaoperatorsdk.operator.processing.DefaultEventHandler.EventMonitor;
-import io.javaoperatorsdk.operator.processing.event.Event;
 
 @SuppressWarnings("rawtypes")
 public class Operator implements AutoCloseable {
   private static final Logger log = LoggerFactory.getLogger(Operator.class);
-  private final KubernetesClient k8sClient;
+  private final KubernetesClient kubernetesClient;
   private final ConfigurationService configurationService;
   private final ControllerManager controllers = new ControllerManager();
 
-  public Operator(KubernetesClient k8sClient, ConfigurationService configurationService) {
-    this.k8sClient = k8sClient;
-    this.configurationService = configurationService;
-    DefaultEventHandler.setEventMonitor(new EventMonitor() {
-      @Override
-      public void processedEvent(String uid, Event event) {
-        configurationService.getMetrics().incrementProcessedEventsNumber();
-      }
+  public Operator(ConfigurationService configurationService) {
+    this(new DefaultKubernetesClient(), configurationService);
+  }
 
-      @Override
-      public void failedEvent(String uid, Event event) {
-        configurationService.getMetrics().incrementControllerRetriesNumber();
-      }
-    });
+  public Operator(KubernetesClient kubernetesClient, ConfigurationService configurationService) {
+    this.kubernetesClient = kubernetesClient;
+    this.configurationService = configurationService;
   }
 
   /** Adds a shutdown hook that automatically calls {@link #close()} when the app shuts down. */
@@ -51,7 +42,7 @@ public class Operator implements AutoCloseable {
   }
 
   public KubernetesClient getKubernetesClient() {
-    return k8sClient;
+    return kubernetesClient;
   }
 
   public ConfigurationService getConfigurationService() {
@@ -79,7 +70,7 @@ public class Operator implements AutoCloseable {
 
     log.info("Client version: {}", Version.clientVersion());
     try {
-      final var k8sVersion = k8sClient.getVersion();
+      final var k8sVersion = kubernetesClient.getVersion();
       if (k8sVersion != null) {
         log.info("Server version: {}.{}", k8sVersion.getMajor(), k8sVersion.getMinor());
       }
@@ -107,7 +98,7 @@ public class Operator implements AutoCloseable {
     controllers.close();
 
     ExecutorServiceManager.close();
-    k8sClient.close();
+    kubernetesClient.close();
   }
 
   /**
@@ -152,7 +143,7 @@ public class Operator implements AutoCloseable {
         configuration = existing;
       }
       final var configuredController =
-          new ConfiguredController(controller, configuration, k8sClient);
+          new ConfiguredController(controller, configuration, kubernetesClient);
       controllers.add(configuredController);
 
       final var watchedNS =
