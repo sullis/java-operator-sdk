@@ -1,0 +1,1 @@
+curl -v "http://localhost:8080/event" -X POST -H "Content-Type: application/json" -d '{"msg":"Hello Knative!"}'

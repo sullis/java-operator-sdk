@@ -6,7 +6,10 @@ import java.net.ConnectException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+import io.javaoperatorsdk.operator.processing.event.internal.ServerlessEventProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,6 +92,38 @@ public class Operator implements AutoCloseable {
     controllers.start();
   }
 
+  public void startServerless() {
+    controllers.shouldStart();
+
+    final var version = configurationService.getVersion();
+    log.info(
+            "Operator SDK {} (commit: {}) built on {} starting...",
+            version.getSdkVersion(),
+            version.getCommit(),
+            version.getBuiltTime());
+
+    log.info("Client version: {}", Version.clientVersion());
+    try {
+      final var k8sVersion = kubernetesClient.getVersion();
+      if (k8sVersion != null) {
+        log.info("Server version: {}.{}", k8sVersion.getMajor(), k8sVersion.getMinor());
+      }
+    } catch (Exception e) {
+      final String error;
+      if (e.getCause() instanceof ConnectException) {
+        error = "Cannot connect to cluster";
+      } else {
+        error = "Error retrieving the server version";
+      }
+      log.error(error, e);
+      throw new OperatorException(error, e);
+    }
+
+    ExecutorServiceManager.init(configurationService);
+    controllers.start();
+  }
+
+
   /** Stop the operator. */
   @Override
   public void close() {
@@ -143,7 +178,7 @@ public class Operator implements AutoCloseable {
         configuration = existing;
       }
       final var configuredController =
-          new ConfiguredController(controller, configuration, kubernetesClient);
+          new ConfiguredController(controller, configuration, kubernetesClient,false);
       controllers.add(configuredController);
 
       final var watchedNS =
@@ -157,6 +192,38 @@ public class Operator implements AutoCloseable {
           watchedNS);
     }
   }
+
+  public <R extends CustomResource> void registerServerless(
+          ResourceController<R> controller, ControllerConfiguration<R> configuration)
+          throws OperatorException {
+    final var existing = configurationService.getConfigurationFor(controller);
+    if (existing == null) {
+      log.warn(
+              "Skipping registration of {} controller named {} because its configuration cannot be found.\n"
+                      + "Known controllers are: {}",
+              controller.getClass().getCanonicalName(),
+              ControllerUtils.getNameFor(controller),
+              configurationService.getKnownControllerNames());
+    } else {
+      if (configuration == null) {
+        configuration = existing;
+      }
+      final var configuredController =
+              new ConfiguredController(controller, configuration, kubernetesClient,true);
+      controllers.add(configuredController);
+
+      final var watchedNS =
+              configuration.watchAllNamespaces()
+                      ? "[all namespaces]"
+                      : configuration.getEffectiveNamespaces();
+      log.info(
+              "Registered Controller: '{}' for CRD: '{}' for namespace(s): {}",
+              configuration.getName(),
+              configuration.getCustomResourceClass(),
+              watchedNS);
+    }
+  }
+
 
   private static class ControllerManager implements Closeable {
     private final List<ConfiguredController> controllers = new LinkedList<>();
@@ -172,9 +239,17 @@ public class Operator implements AutoCloseable {
       }
     }
 
-    public synchronized void start() {
-      controllers.parallelStream().forEach(ConfiguredController::start);
+    public synchronized Map<ResourceController,ServerlessEventProcessor> start() {
+      Map<ResourceController,ServerlessEventProcessor> res = new ConcurrentHashMap<>();
+      controllers.parallelStream().forEach(c-> {
+        var processor = c.start();
+        if (processor != null) {
+          res.put(c.getController(),processor);
+        }
+      }
+      );
       started = true;
+      return res;
     }
 
     @Override

@@ -3,6 +3,8 @@ package io.javaoperatorsdk.operator.processing.event;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+import io.javaoperatorsdk.operator.processing.event.internal.BackboneCustomResourceEventSource;
+import io.javaoperatorsdk.operator.processing.event.internal.ServerlessBackboneEventSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,14 +25,25 @@ public class DefaultEventSourceManager<R extends CustomResource<?, ?>>
   private final Set<EventSource> eventSources = Collections.synchronizedSet(new HashSet<>());
   private DefaultEventHandler<R> defaultEventHandler;
   private TimerEventSource<R> retryAndRescheduleTimerEventSource;
-  private CustomResourceEventSource customResourceEventSource;
+  private BackboneCustomResourceEventSource customResourceEventSource;
+  private final boolean serverless;
 
   DefaultEventSourceManager(DefaultEventHandler<R> defaultEventHandler) {
+    this.serverless = false;
     init(defaultEventHandler);
   }
 
   public DefaultEventSourceManager(ConfiguredController<R> controller) {
-    customResourceEventSource = new CustomResourceEventSource<>(controller);
+    this(controller,false);
+  }
+
+  public DefaultEventSourceManager(ConfiguredController<R> controller, boolean serverless) {
+    this.serverless = serverless;
+    if (serverless) {
+      customResourceEventSource = new ServerlessBackboneEventSource(controller);
+    } else {
+      customResourceEventSource = new CustomResourceEventSource<>(controller);
+    }
     init(new DefaultEventHandler<>(controller, customResourceEventSource));
     registerEventSource(customResourceEventSource);
   }
@@ -108,7 +121,7 @@ public class DefaultEventSourceManager<R extends CustomResource<?, ?>>
   }
 
   @Override
-  public CustomResourceEventSource<R> getCustomResourceEventSource() {
+  public BackboneCustomResourceEventSource<R> getCustomResourceEventSource() {
     return customResourceEventSource;
   }
 

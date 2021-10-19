@@ -30,7 +30,7 @@ import static io.javaoperatorsdk.operator.processing.event.internal.LabelSelecto
  * This is a special case since is not bound to a single custom resource
  */
 public class CustomResourceEventSource<T extends CustomResource<?, ?>> extends AbstractEventSource
-    implements ResourceEventHandler<T>, ResourceCache<T> {
+    implements ResourceEventHandler<T>, BackboneCustomResourceEventSource<T> {
 
   public static final String ANY_NAMESPACE_MAP_KEY = "anyNamespace";
 

@@ -71,6 +71,7 @@
         <formatter-maven-plugin.version>2.16.0</formatter-maven-plugin.version>
         <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
         <impsort-maven-plugin.version>1.6.2</impsort-maven-plugin.version>
+        <cloudevents.version>2.2.0</cloudevents.version>
     </properties>
 
     <modules>
@@ -167,6 +168,21 @@
                 <groupId>io.javaoperatorsdk</groupId>
                 <artifactId>operator-framework</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.cloudevents</groupId>
+                <artifactId>cloudevents-api</artifactId>
+                <version>${cloudevents.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.cloudevents</groupId>
+                <artifactId>cloudevents-core</artifactId>
+                <version>${cloudevents.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.cloudevents</groupId>
+                <artifactId>cloudevents-json-jackson</artifactId>
+                <version>${cloudevents.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

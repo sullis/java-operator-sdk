@@ -116,22 +116,23 @@ public class DefaultEventHandler<R extends CustomResource<?, ?>> implements Even
   }
 
   @Override
-  public void handleEvent(Event event) {
+  public boolean handleEvent(Event event) {
     lock.lock();
     try {
       log.debug("Received event: {}", event);
       if (!this.running) {
         log.debug("Skipping event: {} because the event handler is shutting down", event);
-        return;
+        return false;
       }
       final var monitor = monitor();
       monitor.processedEvent(event.getRelatedCustomResourceID(), event);
 
       handleEventMarking(event);
       if (!eventMarker.deleteEventPresent(event.getRelatedCustomResourceID())) {
-        submitReconciliationExecution(event.getRelatedCustomResourceID());
+        return submitReconciliationExecution(event.getRelatedCustomResourceID());
       } else {
         cleanupForDeletedEvent(event.getRelatedCustomResourceID());
+        return false;
       }
     } finally {
       lock.unlock();

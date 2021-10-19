@@ -152,8 +152,9 @@ class TimerEventSourceTest {
     private final List<Event> events = new CopyOnWriteArrayList<>();
 
     @Override
-    public void handleEvent(Event event) {
+    public boolean handleEvent(Event event) {
       events.add(event);
+      return true;
     }
   }
 }

@@ -21,20 +21,24 @@ import io.javaoperatorsdk.operator.api.UpdateControl;
 import io.javaoperatorsdk.operator.api.config.ControllerConfiguration;
 import io.javaoperatorsdk.operator.processing.event.DefaultEventSourceManager;
 import io.javaoperatorsdk.operator.processing.event.EventSourceManager;
+import io.javaoperatorsdk.operator.processing.event.internal.ServerlessEventProcessor;
 
 public class ConfiguredController<R extends CustomResource<?, ?>> implements ResourceController<R>,
     Closeable {
   private final ResourceController<R> controller;
   private final ControllerConfiguration<R> configuration;
   private final KubernetesClient kubernetesClient;
+  private final boolean serverless;
   private EventSourceManager eventSourceManager;
 
   public ConfiguredController(ResourceController<R> controller,
       ControllerConfiguration<R> configuration,
-      KubernetesClient kubernetesClient) {
+      KubernetesClient kubernetesClient, boolean serverless
+  ) {
     this.controller = controller;
     this.configuration = configuration;
     this.kubernetesClient = kubernetesClient;
+    this.serverless = serverless;
   }
 
   @Override
@@ -148,7 +152,7 @@ public class ConfiguredController<R extends CustomResource<?, ?>> implements Res
    *
    * @throws OperatorException if a problem occurred during the registration process
    */
-  public void start() throws OperatorException {
+  public ServerlessEventProcessor start() throws OperatorException {
     final Class<R> resClass = configuration.getCustomResourceClass();
     final String controllerName = configuration.getName();
     final var crdName = configuration.getCRDName();
@@ -168,8 +172,13 @@ public class ConfiguredController<R extends CustomResource<?, ?>> implements Res
     }
 
     try {
-      eventSourceManager = new DefaultEventSourceManager<>(this);
+      eventSourceManager = new DefaultEventSourceManager<>(this,serverless);
       controller.init(eventSourceManager);
+      if (serverless) {
+        return null;
+      } else {
+        return (ServerlessEventProcessor) eventSourceManager.getCustomResourceEventSource();
+      }
     } catch (MissingCRDException e) {
       throwMissingCRDException(crdName, specVersion, controllerName);
     }
@@ -180,6 +189,7 @@ public class ConfiguredController<R extends CustomResource<?, ?>> implements Res
               + controllerName
               + "' is configured to watch the current namespace but it couldn't be inferred from the current configuration.");
     }
+    return null;
   }
 
   private void throwMissingCRDException(String crdName, String specVersion, String controllerName) {

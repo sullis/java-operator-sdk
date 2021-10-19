@@ -6,6 +6,7 @@ import java.util.Set;
 
 import io.fabric8.kubernetes.client.CustomResource;
 import io.javaoperatorsdk.operator.OperatorException;
+import io.javaoperatorsdk.operator.processing.event.internal.BackboneCustomResourceEventSource;
 import io.javaoperatorsdk.operator.processing.event.internal.CustomResourceEventSource;
 
 public interface EventSourceManager<T extends CustomResource<?, ?>> extends Closeable {
@@ -23,7 +24,7 @@ public interface EventSourceManager<T extends CustomResource<?, ?>> extends Clos
 
   Set<EventSource> getRegisteredEventSources();
 
-  CustomResourceEventSource<T> getCustomResourceEventSource();
+  BackboneCustomResourceEventSource<T> getCustomResourceEventSource();
 
   @Override
   default void close() throws IOException {}
