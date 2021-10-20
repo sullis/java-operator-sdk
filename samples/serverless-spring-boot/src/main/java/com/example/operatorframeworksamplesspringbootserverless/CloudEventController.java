@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class CloudEventController {
 
-    private static final Logger log = LoggerFactory.getLogger(CloudEventController.class);
+  private static final Logger log = LoggerFactory.getLogger(CloudEventController.class);
 
-    @PostMapping("/event")
-    public void processEvent(@RequestBody String event) {
-        log.info(event);
-    }
+  @PostMapping("/event")
+  public void processEvent(@RequestBody String event) {
+    log.info(event);
+  }
 
 }

@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import io.javaoperatorsdk.operator.processing.event.internal.ServerlessEventProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +21,7 @@ import io.javaoperatorsdk.operator.api.config.ConfigurationService;
 import io.javaoperatorsdk.operator.api.config.ControllerConfiguration;
 import io.javaoperatorsdk.operator.api.config.ExecutorServiceManager;
 import io.javaoperatorsdk.operator.processing.ConfiguredController;
+import io.javaoperatorsdk.operator.processing.event.internal.ServerlessEventProcessor;
 
 @SuppressWarnings("rawtypes")
 public class Operator implements AutoCloseable {
@@ -97,10 +97,10 @@ public class Operator implements AutoCloseable {
 
     final var version = configurationService.getVersion();
     log.info(
-            "Operator SDK {} (commit: {}) built on {} starting...",
-            version.getSdkVersion(),
-            version.getCommit(),
-            version.getBuiltTime());
+        "Operator SDK {} (commit: {}) built on {} starting...",
+        version.getSdkVersion(),
+        version.getCommit(),
+        version.getBuiltTime());
 
     log.info("Client version: {}", Version.clientVersion());
     try {
@@ -178,7 +178,7 @@ public class Operator implements AutoCloseable {
         configuration = existing;
       }
       final var configuredController =
-          new ConfiguredController(controller, configuration, kubernetesClient,false);
+          new ConfiguredController(controller, configuration, kubernetesClient, false);
       controllers.add(configuredController);
 
       final var watchedNS =
@@ -194,33 +194,33 @@ public class Operator implements AutoCloseable {
   }
 
   public <R extends CustomResource> void registerServerless(
-          ResourceController<R> controller, ControllerConfiguration<R> configuration)
-          throws OperatorException {
+      ResourceController<R> controller, ControllerConfiguration<R> configuration)
+      throws OperatorException {
     final var existing = configurationService.getConfigurationFor(controller);
     if (existing == null) {
       log.warn(
-              "Skipping registration of {} controller named {} because its configuration cannot be found.\n"
-                      + "Known controllers are: {}",
-              controller.getClass().getCanonicalName(),
-              ControllerUtils.getNameFor(controller),
-              configurationService.getKnownControllerNames());
+          "Skipping registration of {} controller named {} because its configuration cannot be found.\n"
+              + "Known controllers are: {}",
+          controller.getClass().getCanonicalName(),
+          ControllerUtils.getNameFor(controller),
+          configurationService.getKnownControllerNames());
     } else {
       if (configuration == null) {
         configuration = existing;
       }
       final var configuredController =
-              new ConfiguredController(controller, configuration, kubernetesClient,true);
+          new ConfiguredController(controller, configuration, kubernetesClient, true);
       controllers.add(configuredController);
 
       final var watchedNS =
-              configuration.watchAllNamespaces()
-                      ? "[all namespaces]"
-                      : configuration.getEffectiveNamespaces();
+          configuration.watchAllNamespaces()
+              ? "[all namespaces]"
+              : configuration.getEffectiveNamespaces();
       log.info(
-              "Registered Controller: '{}' for CRD: '{}' for namespace(s): {}",
-              configuration.getName(),
-              configuration.getCustomResourceClass(),
-              watchedNS);
+          "Registered Controller: '{}' for CRD: '{}' for namespace(s): {}",
+          configuration.getName(),
+          configuration.getCustomResourceClass(),
+          watchedNS);
     }
   }
 
@@ -239,15 +239,14 @@ public class Operator implements AutoCloseable {
       }
     }
 
-    public synchronized Map<ResourceController,ServerlessEventProcessor> start() {
-      Map<ResourceController,ServerlessEventProcessor> res = new ConcurrentHashMap<>();
-      controllers.parallelStream().forEach(c-> {
+    public synchronized Map<ResourceController, ServerlessEventProcessor> start() {
+      Map<ResourceController, ServerlessEventProcessor> res = new ConcurrentHashMap<>();
+      controllers.parallelStream().forEach(c -> {
         var processor = c.start();
         if (processor != null) {
-          res.put(c.getController(),processor);
+          res.put(c.getController(), processor);
         }
-      }
-      );
+      });
       started = true;
       return res;
     }

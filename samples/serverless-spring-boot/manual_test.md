@@ -1,5 +1,8 @@
 curl -v "http://localhost:8080/event" -X POST -H "Content-Type: application/json" -d '{"msg":"Hello Knative!"}'
 
+curl -v "http://slop.default.127.0.0.1.nip.io/event" -X POST -H "Content-Type: application/json" -d '{"msg":"Hello Knative!"}'
+curl -v "http://slop.default.127.0.0.1.nip.io:8080/event" -X POST -H "Content-Type: application/json" -d '{"msg":"Hello Knative!"}'
+
 
 curl -v "http://default-broker.default.svc.cluster.local" \
 -X POST \

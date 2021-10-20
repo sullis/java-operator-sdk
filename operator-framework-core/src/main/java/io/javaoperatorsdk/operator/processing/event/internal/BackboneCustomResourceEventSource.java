@@ -5,8 +5,9 @@ import io.javaoperatorsdk.operator.processing.ResourceCache;
 import io.javaoperatorsdk.operator.processing.event.CustomResourceID;
 import io.javaoperatorsdk.operator.processing.event.EventSource;
 
-public interface BackboneCustomResourceEventSource<T extends CustomResource<?,?>> extends EventSource, ResourceCache<T> {
+public interface BackboneCustomResourceEventSource<T extends CustomResource<?, ?>>
+    extends EventSource, ResourceCache<T> {
 
-    void whitelistNextEvent(CustomResourceID customResourceID);
+  void whitelistNextEvent(CustomResourceID customResourceID);
 
 }

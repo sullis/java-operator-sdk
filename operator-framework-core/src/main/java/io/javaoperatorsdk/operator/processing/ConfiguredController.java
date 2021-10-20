@@ -33,8 +33,13 @@ public class ConfiguredController<R extends CustomResource<?, ?>> implements Res
 
   public ConfiguredController(ResourceController<R> controller,
       ControllerConfiguration<R> configuration,
-      KubernetesClient kubernetesClient, boolean serverless
-  ) {
+      KubernetesClient kubernetesClient) {
+    this(controller, configuration, kubernetesClient, false);
+  }
+
+  public ConfiguredController(ResourceController<R> controller,
+      ControllerConfiguration<R> configuration,
+      KubernetesClient kubernetesClient, boolean serverless) {
     this.controller = controller;
     this.configuration = configuration;
     this.kubernetesClient = kubernetesClient;
@@ -172,7 +177,7 @@ public class ConfiguredController<R extends CustomResource<?, ?>> implements Res
     }
 
     try {
-      eventSourceManager = new DefaultEventSourceManager<>(this,serverless);
+      eventSourceManager = new DefaultEventSourceManager<>(this, serverless);
       controller.init(eventSourceManager);
       if (serverless) {
         return null;

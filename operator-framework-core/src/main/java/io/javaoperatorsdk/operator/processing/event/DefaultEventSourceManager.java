@@ -3,8 +3,6 @@ package io.javaoperatorsdk.operator.processing.event;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
-import io.javaoperatorsdk.operator.processing.event.internal.BackboneCustomResourceEventSource;
-import io.javaoperatorsdk.operator.processing.event.internal.ServerlessBackboneEventSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +11,9 @@ import io.javaoperatorsdk.operator.MissingCRDException;
 import io.javaoperatorsdk.operator.OperatorException;
 import io.javaoperatorsdk.operator.processing.ConfiguredController;
 import io.javaoperatorsdk.operator.processing.DefaultEventHandler;
+import io.javaoperatorsdk.operator.processing.event.internal.BackboneCustomResourceEventSource;
 import io.javaoperatorsdk.operator.processing.event.internal.CustomResourceEventSource;
+import io.javaoperatorsdk.operator.processing.event.internal.ServerlessBackboneEventSource;
 import io.javaoperatorsdk.operator.processing.event.internal.TimerEventSource;
 
 public class DefaultEventSourceManager<R extends CustomResource<?, ?>>
@@ -34,7 +34,7 @@ public class DefaultEventSourceManager<R extends CustomResource<?, ?>>
   }
 
   public DefaultEventSourceManager(ConfiguredController<R> controller) {
-    this(controller,false);
+    this(controller, false);
   }
 
   public DefaultEventSourceManager(ConfiguredController<R> controller, boolean serverless) {
