@@ -17,11 +17,16 @@
 	</properties>
 	<packaging>jar</packaging>
 	<dependencies>
-<!--		<dependency>-->
-<!--			<groupId>io.javaoperatorsdk</groupId>-->
-<!--			<artifactId>operator-framework-samples-common</artifactId>-->
-<!--			<version>${project.version}</version>-->
-<!--		</dependency>-->
+		<dependency>
+			<groupId>io.javaoperatorsdk</groupId>
+			<artifactId>operator-framework</artifactId>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.fabric8</groupId>
+			<artifactId>crd-generator-apt</artifactId>
+			<scope>compile</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
@@ -31,6 +36,31 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.cloudevents</groupId>
+			<artifactId>cloudevents-api</artifactId>
+			<version>${cloudevents.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.cloudevents</groupId>
+			<artifactId>cloudevents-core</artifactId>
+			<version>${cloudevents.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.cloudevents</groupId>
+			<artifactId>cloudevents-json-jackson</artifactId>
+			<version>${cloudevents.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.cloudevents</groupId>
+			<artifactId>cloudevents-spring</artifactId>
+			<version>${cloudevents.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.cloudevents</groupId>
+			<artifactId>cloudevents-http-basic</artifactId>
+			<version>${cloudevents.version}</version>
 		</dependency>
 	</dependencies>
 

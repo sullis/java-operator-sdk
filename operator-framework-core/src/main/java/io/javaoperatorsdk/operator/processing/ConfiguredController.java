@@ -180,9 +180,9 @@ public class ConfiguredController<R extends CustomResource<?, ?>> implements Res
       eventSourceManager = new DefaultEventSourceManager<>(this, serverless);
       controller.init(eventSourceManager);
       if (serverless) {
-        return null;
-      } else {
         return (ServerlessEventProcessor) eventSourceManager.getCustomResourceEventSource();
+      } else {
+        return null;
       }
     } catch (MissingCRDException e) {
       throwMissingCRDException(crdName, specVersion, controllerName);

@@ -29,6 +29,7 @@ public class Operator implements AutoCloseable {
   private final KubernetesClient kubernetesClient;
   private final ConfigurationService configurationService;
   private final ControllerManager controllers = new ControllerManager();
+  private Map<ResourceController, ServerlessEventProcessor> processors;
 
   public Operator(ConfigurationService configurationService) {
     this(new DefaultKubernetesClient(), configurationService);
@@ -120,7 +121,7 @@ public class Operator implements AutoCloseable {
     }
 
     ExecutorServiceManager.init(configurationService);
-    controllers.start();
+    this.processors = controllers.start();
   }
 
 
@@ -222,6 +223,10 @@ public class Operator implements AutoCloseable {
           configuration.getCustomResourceClass(),
           watchedNS);
     }
+  }
+
+  public Map<ResourceController, ServerlessEventProcessor> getProcessors() {
+    return processors;
   }
 
 
